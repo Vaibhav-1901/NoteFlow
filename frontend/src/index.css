@@ -3,7 +3,16 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
-
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #111111;
+}
+/* *{
+  margin: 0;
+  padding: 0;
+} */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }

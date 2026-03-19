@@ -70,7 +70,7 @@ function Home() {
     }, [selectedNote]);
     return (
         <>
-            <div className="flex h-screen bg-[#111111] text-[#e0e0e0] overflow-hidden font-mono fade-in">
+            <div className="flex h-screen bg-[#111111] text-[#e0e0e0] overflow-hidden font-mono fade-in w-full ">
                 {sidebarVisible && (
                     <aside className='fade-in w-55 md:min-w-85 md:w-85 bg-[#131313] border-r border-[#1f1f1f] flex flex-col h-screen overflow-hidden'>
                         {/* App header */}
@@ -199,7 +199,7 @@ function Home() {
                     </aside>
                 )}
                 {/* Main Full Note */}
-                <main className='flex-1 flex flex-col h-screen overflow-hidden relative '>
+                <main className='flex-1 flex flex-col h-full  overflow-hidden relative  '>
                     {/* Tools */}
 
                     <div className={` items-center md:px-10 px-4 py-3 border-b border-[#1a1a1a] gap-1 relative flex  ${sidebarVisible? 'justify-end' : 'justify-between'} md:justify-between`}>

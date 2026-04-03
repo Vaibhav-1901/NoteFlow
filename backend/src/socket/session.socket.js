@@ -1,6 +1,6 @@
 import {Server} from 'socket.io';
 import { nanoid } from 'nanoid';
-
+import { Session } from '../models/session.model.js';
 const initializeSocket=(server)=>{
     const io=new Server(server,{
         cors:{
@@ -12,15 +12,95 @@ const initializeSocket=(server)=>{
     io.on("connection",(socket)=>{
         console.log("New client connected: ", socket.id);
         //create session
-        socket.on("createSession",({userId,username})=>{
+        socket.on("createSession", async ({userId})=>{
             try {
                 const sessionId=nanoid(8);
-                socket.join(sessionId);
-                socket.emit("sessionCreated",{sessionId});  
+                const newsession=await Session.create({
+                    sessionId,
+                    members:[userId],
+                    createdBy:userId
+                })   
+                socket.join(sessionId);//joining a room with sessionId by the one who created the session
+                socket.data={
+                    sessionId:newsession.sessionId,
+                    userId,
+                }
+                socket.emit("sessionCreated",{sessionId});
+                console.log("session created with id: ", sessionId);
             } catch (error) {
+                socket.emit("error", { message: error.message });
                 console.error("Error creating session:", error);
             }      
+        });
+
+            //join session
+            socket.on("joinSession",async({sessionId,userId})=>{
+                try {
+                    const session=await Session.findById(sessionId);
+                    if(!session){
+                        socket.emit("error", { message: "Room not found" });
+                        return;
+                    }
+                    if(!session.members.includes(userId)){
+                        session.members.push(userId);
+                        await session.save();
+                    }
+                    socket.data={
+                        sessionId,
+                        userId,
+                    }
+                socket.join(sessionId);
+                socket.emit("sessionJoined",{sessionId});// telling the user that they have joined the session
+                console.log("User joined session: ", sessionId);
+                socket.to(sessionId).emit("userJoined",{userId});// telling other users in the session that a new user has joined
+            } catch (error) {
+                socket.emit("error", { message: error.message });
+                console.error("Error joining session:", error);
+            }
         })
+        //NOTE ADDED TO SESSION
+        socket.on("note-change",async({note,sessionId})=>{
+            try {
+                const newnote=await Session.findByIdAndUpdate(
+                    sessionId,
+                    {notes:note},
+                    {new:true}
+                )
+                //emit to everyone else in the session that a note has been added
+                socket.to(sessionId).emit("note-added", {note:newnote});     
+            } catch (error) {
+                socket.emit("error", { message: error.message });
+                console.log("Error updating note:", error);
+
+            }
+        })
+        //leave session 
+        socket.on("leaveSession",async({sessionId,userId})=>{
+            await handleLeave(socket,sessionId,userId);
+        })
+
+        //disconnect unexpectedly
+        socket.on("disconnect",async()=>{
+            const {sessionId,userId}=socket.data;
+            if(sessionId && userId){
+                await handleLeave(socket,sessionId,userId);
+            }
+        })
+
+
+        async function handleLeave(socket,sessionId,userId){
+            try {
+                await Session.findByIdAndUpdate(
+                    sessionId,
+                    {$pull:{members:userId}}
+                )//removing from the memvbers
+                socket.leave(sessionId); // remove the user from the room
+                socket.to(sessionId).emit("userLeft",{userId});    
+            } catch (error) {
+                socket.emit("error", { message: error.message });
+                console.error("Error leaving session:", error);
+            }
+        }
     });
 
     

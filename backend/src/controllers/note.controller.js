@@ -1,5 +1,5 @@
 import { Note } from "../models/note.model.js";
-
+import { User } from "../models/user.model.js";
 const createNote= async(req,res)=>{
     try{
         const{title,content}=req.body;

@@ -1,21 +1,25 @@
-const { mongo } = require("mongoose");
+
 import mongoose from "mongoose";
-import Note from "./note.model.js";
-import User from "./user.model.js";
 
 const sessionSchema = new mongoose.Schema({
     sessionId: {
         type: String,
         required: true
     },
-    notes:[ {
+    notes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Note",
     }],
-    members:[ {
+    members: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-    }]
+    }],
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    }
+
 }, {
     timestamps: true
 });
